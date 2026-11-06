@@ -12,58 +12,6 @@ re-evaluated live, but moved slider values are not saved back to the model.
 - `states[0].primary.calculations[]` – results (`ROICalculation`).
 - `states[0].header` – header; tray layouts as the template allows.
 
-## Model fields
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `inputs` (required) | array | min 1, max 5 | Sliders, top to bottom, see "inputs[] model". |
-| `calculations` (required) | array | min 1, max 4 | Results, top to bottom, see "calculations[] model". |
-| `collectionColor` | string | default `"theme"` | Written by the collections; sliders and values use the theme color regardless. |
-
-Plus the common fields, see `BaseElement.md`.
-
-### inputs[] model (`ROIInput`)
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `name` (required) | string | identifier: letters, digits, `_`, not starting with a digit (`"users"`, `"hourly_cost"`) | Variable name referenced by formulas. Must be unique. |
-| `label` (required) | string | plain text | Caption shown as `"<label>: <formatted value>"`. |
-| `value` (required) | number | within `min`–`max`; for `"percent"` a fraction (`0.25` = 25%) | Initial slider value and the value used in formulas. |
-| `min`, `max` (required) | number | slider range; for `"percent"` in percent units (`0`–`100`) | Slider bounds. |
-| `step` | number | default none (continuous) | Slider step, in the same units as `min`/`max`. |
-| `format` | string | `"number"`, `"currency"`, `"percent"` (`"text"`, `"date"`, `"icon"`, `"none"` exist but are meaningless here) | Display format of the value in the label. |
-| `formatOptions` | object | formatter options: `decimal` (`"auto"` or digits), `separator` (bool), `abbreviated` (bool), `currency` (`"$"`), … | Overrides the default number formatting. |
-| `id` | string | uuid | Assigned if missing. |
-
-### calculations[] model (`ROICalculation`)
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `label` (required) | string | plain text | Caption above the value. |
-| `formula` (required) | string | arithmetic over input names: `+ - * /`, parentheses, numbers, `×`/`÷` accepted | Evaluated with each input's current value; identifiers are replaced by `(value)`, everything else except digits, `.`, operators, parentheses and whitespace is stripped. Any unknown identifier (or empty result) renders `"Error parsing formula"`. |
-| `format` | string | `"number"`, `"currency"`, `"percent"` | Display format; `"percent"` multiplies the result by 100 for display (so formulas should produce fractions). |
-| `formatOptions` | object | as for inputs | Formatting overrides. |
-| `text` | string | e.g. `"/month"` | Suffix drawn after the value. |
-| `id` | string | uuid | Assigned if missing. |
-
-## Nested elements
-
-- `inputs` -> `ROIInputs` (collection bound to `inputs`, max 5): each `ROIInput` has a read-only `label`
-  `TextElement` and an HTML slider (30px tall).
-- `calculations` -> `ROICalculations` (collection bound to `calculations`, max 4): each `ROICalculation` has
-  read-only `label`, `value` and optional `text` `TextElement`s.
-
-## Rules and limits
-
-- Layout: both columns are `max(66% of width, 600px)` wide in total with an 80px gap, centred; items are vertically
-  centred in their column. Rows are not scaled: more than ~5 inputs or 4 results overflow.
-- Percent inputs: `value` is stored as a fraction, the slider and `min`/`max`/`step` operate in percent units
-  (the element multiplies/divides by 100 when moving between them).
-- Formulas are evaluated with `eval` after sanitizing to numeric expressions; function calls, strings and names
-  that are not inputs cannot be used.
-- Slider changes are kept in memory (`values`) for the open canvas only; the stored model keeps the initial `value`s.
-- No migrations.
-
 ## Minimal example
 
 ```json
@@ -94,3 +42,59 @@ Plus the common fields, see `BaseElement.md`.
 - Only `+ - * /` and parentheses are supported: `^`, `%` and function names (`pow`, `round`…) end as
   "Error parsing formula"; thousands separators are stripped (`1,000` evaluates as `1000`). Write `x * x` instead
   of `x^2` and `x / 100` instead of `x%`.
+
+## Rules and limits
+
+- Layout: both columns are `max(66% of width, 600px)` wide in total with an 80px gap, centred; items are vertically
+  centred in their column. Rows are not scaled: more than ~5 inputs or 4 results overflow.
+- Percent inputs: `value` is stored as a fraction, the slider and `min`/`max`/`step` operate in percent units
+  (the element multiplies/divides by 100 when moving between them).
+- Formulas are evaluated with `eval` after sanitizing to numeric expressions; function calls, strings and names
+  that are not inputs cannot be used.
+- Slider changes are kept in memory (`values`) for the open canvas only; the stored model keeps the initial `value`s.
+- No migrations.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `inputs` (required) | array | min 1, max 5 | Sliders, top to bottom, see "inputs[] model". |
+| `calculations` (required) | array | min 1, max 4 | Results, top to bottom, see "calculations[] model". |
+| `collectionColor` | string | default `"theme"` | Written by the collections; sliders and values use the theme color regardless. |
+
+Plus the common fields, see `BaseElement.md`.
+
+#### inputs[] model (`ROIInput`)
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `name` (required) | string | identifier: letters, digits, `_`, not starting with a digit (`"users"`, `"hourly_cost"`) | Variable name referenced by formulas. Must be unique. |
+| `label` (required) | string | plain text | Caption shown as `"<label>: <formatted value>"`. |
+| `value` (required) | number | within `min`–`max`; for `"percent"` a fraction (`0.25` = 25%) | Initial slider value and the value used in formulas. |
+| `min`, `max` (required) | number | slider range; for `"percent"` in percent units (`0`–`100`) | Slider bounds. |
+| `step` | number | default none (continuous) | Slider step, in the same units as `min`/`max`. |
+| `format` | string | `"number"`, `"currency"`, `"percent"` (`"text"`, `"date"`, `"icon"`, `"none"` exist but are meaningless here) | Display format of the value in the label. |
+| `formatOptions` | object | formatter options: `decimal` (`"auto"` or digits), `separator` (bool), `abbreviated` (bool), `currency` (`"$"`), … | Overrides the default number formatting. |
+| `id` | string | uuid | Assigned if missing. |
+
+#### calculations[] model (`ROICalculation`)
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `label` (required) | string | plain text | Caption above the value. |
+| `formula` (required) | string | arithmetic over input names: `+ - * /`, parentheses, numbers, `×`/`÷` accepted | Evaluated with each input's current value; identifiers are replaced by `(value)`, everything else except digits, `.`, operators, parentheses and whitespace is stripped. Any unknown identifier (or empty result) renders `"Error parsing formula"`. |
+| `format` | string | `"number"`, `"currency"`, `"percent"` | Display format; `"percent"` multiplies the result by 100 for display (so formulas should produce fractions). |
+| `formatOptions` | object | as for inputs | Formatting overrides. |
+| `text` | string | e.g. `"/month"` | Suffix drawn after the value. |
+| `id` | string | uuid | Assigned if missing. |
+
+### Nested elements
+
+- `inputs` -> `ROIInputs` (collection bound to `inputs`, max 5): each `ROIInput` has a read-only `label`
+  `TextElement` and an HTML slider (30px tall).
+- `calculations` -> `ROICalculations` (collection bound to `calculations`, max 4): each `ROICalculation` has
+  read-only `label`, `value` and optional `text` `TextElement`s.

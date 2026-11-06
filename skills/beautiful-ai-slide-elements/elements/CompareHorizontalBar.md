@@ -11,29 +11,6 @@ root element of template `compare_horizontal_bars`. The model is the shared comp
 - `states[0].primary` - the chart (root of `compare_horizontal_bars`).
 - `states[0].primary.items[]` - one `CompareHorizontalBarItem` per bar, top to bottom.
 
-## Model fields
-
-No fields beyond the common ones (`items`, `format`, `formatOptions`, `minValue`, `maxValue`, `collectionColor`,
-`decorationStyle`), see `CompareValuesCollection.md`. `maxItemCount` is 7.
-
-### items[] model (`CompareHorizontalBarItem`)
-
-Exactly the common item model: `value` (required), `text` (`{ blocks }`, `title_and_body`, allowed block styles
-`title` and `body`), `color`, `hilited`, `id`. The caption column is as wide as the widest caption, capped at 33% of
-the element width; the remaining width is the 100% bar length.
-
-## Nested elements
-
-- `items[]` -> `CompareHorizontalBarItem` (1-7): `shape` (SVG rect), `text` (`TextElement.md`), optional `label`
-  (`CompareValuesItemLabel`, only when `format != "none"`).
-
-## Rules and limits
-
-- Bar height = `min(100px, available height / item count - gap)`; the label font size is half the bar height.
-- Negative values: when `minValue < 0` a baseline is computed at `maxValue / (maxValue - minValue)` of the bar area;
-  positive bars grow right from it, negative bars grow left.
-- Canvas margins are asymmetric (`right: 100px`) to leave room for labels that sit after short bars.
-
 ## Minimal example
 
 ```json
@@ -61,3 +38,30 @@ the element width; the remaining width is the 100% bar length.
 - Items are not sorted: write them in the order you want them displayed (largest first is the usual choice).
 - See `CompareValuesCollection.md` for the value/format pitfalls (missing `value` -> random, percent as 0-100,
   `format: "none"` hides labels, `formatOptions` replaces the defaults entirely).
+
+## Rules and limits
+
+- Bar height = `min(100px, available height / item count - gap)`; the label font size is half the bar height.
+- Negative values: when `minValue < 0` a baseline is computed at `maxValue / (maxValue - minValue)` of the bar area;
+  positive bars grow right from it, negative bars grow left.
+- Canvas margins are asymmetric (`right: 100px`) to leave room for labels that sit after short bars.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+No fields beyond the common ones (`items`, `format`, `formatOptions`, `minValue`, `maxValue`, `collectionColor`,
+`decorationStyle`), see `CompareValuesCollection.md`. `maxItemCount` is 7.
+
+#### items[] model (`CompareHorizontalBarItem`)
+
+Exactly the common item model: `value` (required), `text` (`{ blocks }`, `title_and_body`, allowed block styles
+`title` and `body`), `color`, `hilited`, `id`. The caption column is as wide as the widest caption, capped at 33% of
+the element width; the remaining width is the 100% bar length.
+
+### Nested elements
+
+- `items[]` -> `CompareHorizontalBarItem` (1-7): `shape` (SVG rect), `text` (`TextElement.md`), optional `label`
+  (`CompareValuesItemLabel`, only when `format != "none"`).

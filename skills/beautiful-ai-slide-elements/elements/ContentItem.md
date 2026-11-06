@@ -24,42 +24,6 @@ The "node" of the collection-based diagrams: one text block with an optional mar
 
 Each parent restricts the choice (e.g. `IconCircle`: content-and-text, bullet-text, numbered-text, lettered-text; `Timeline`: text, bullet-text, numbered-text, lettered-text, content-and-text) and usually applies one `nodeType` to all its nodes; see the parent's doc.
 
-## Model fields
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `id` (required) | string | uuid | Node key; connectors reference it (`source` / `target`), see `ConnectorGroup.md`. |
-| `nodeType` | string | see above | Picks the node class. |
-| `text` | object | `{ blocks: [...] }`, see `TextElement.md` | The node's text (block structure "header": a `title` block, optional `body` block). Required for every type but `"content"`. |
-| `textWidth` | number or null | px, 50–1280; `null` = auto width (then 200 px when a width is needed) | Width of the text column (marker types, `"text"`) or of the shape (shape types without `size`). |
-| `textDirection` | string | `"left"`, `"right"`, `"top"`, `"bottom"`, `"auto"`; default `"auto"` for marker types, `"right"` otherwise | Side of the marker the text sits on. `"auto"` picks the side facing away from the node's first connector (`"right"` when unconnected). Ignored by `"text"` and shape types. |
-| `size` | number | px, 50–400 (20–400 for `"content"`, 10+ for `"flex-circle"`); default from the theme (`markerSize`) | Marker diameter of the media/number/letter/flex-circle types. |
-| `size` | object | `{ width, height }` px | Shape types only: a fixed shape size instead of fitting the text. |
-| `color` | string | palette color (`"theme"`, `"accent1"`, …); default the parent's `collectionColor` | Marker / shape / icon frame color, and the default color of connectors leaving the node. |
-| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`; default theme element style | Fill style of shapes and media frames. Numbered/lettered markers are always filled; `"bullet-text"` and `"text"` ignore it. |
-| `content_type`, `content_value` | string | `"icon"` + icon key, `"image"` + asset id; see `ContentElement.md` | Media of `"content"` / `"content-and-text"` nodes, read directly from the node model. |
-| `frameType` | string | `"theme"`, `"none"`, `"circle"`, `"rect"`, `"rounded_rect"`, `"octagon"`, … | Frame of the media marker; `"theme"` follows the theme shape. |
-| `value` | object | `{ blocks: [{ type: "text", html: "1" }] }` | Badge text of `"numbered-text"` / `"lettered-text"`, only where the parent lets users edit it (annotation layers other than the timeline's, e.g. chart annotations); `IconCircle`, `HubAndSpoke` and `Timeline` derive it from the index and never read it. |
-| `hilited` | boolean | `false` | Emphasized node (collection item flag); `"flex-circle"` renders muted when hilited. |
-| `x`, `y` | number | parent-defined | Node position. `Timeline`: fractions 0–1 of the element, authored. `IconCircle` / `HubAndSpoke`: computed by the layout on every render, do not author. Legacy callout items: fractions, migrated to px callouts. |
-| `textPosition` | string | `"center"` | Rarely read; leave absent. |
-
-Legacy fields the 10.x migrations rewrite: `userSize` -> `textWidth`; `label` -> `value`; `title: { text }` / `blocks` (old text object) -> `text.blocks`. Do not write them.
-
-## Nested elements
-
-- `text` -> `TextElement.md` (title-and-body, auto width when `textWidth` is `null`, font size synced across sibling nodes in most parents).
-- `marker` -> dot (`"bullet-text"`), number/letter badge (`"numbered-text"`, `"lettered-text"`: a single-block `TextElement` named `value`), or `media` -> `FramedMediaElement.md` (`"content-and-text"`).
-- `content` -> `FramedMediaElement.md` (`"content"`).
-- `shape` -> the SVG shape (`"box"`, `"capsule"`, `"circle"`, `"diamond"`, `"flex-circle"`).
-
-## Rules and limits
-
-- Node geometry is marker + text: the marker's bounding box and the text column are unioned; the parent places the node by its registration point (marker center for marker types, shape center for shape types, text center for `"text"`), which is what connectors aim at.
-- Shape nodes: `"circle"` and `"diamond"` cap the width at 500 px, the others at 1180 px; the height follows the text unless `size` is an object.
-- `"flex-circle"` only puts the text inside the circle when `textDirection` is `"auto"` and the text fits the inscribed square at its synced size; otherwise it lays the text out on the right.
-- Numbered and lettered badges count every node of the collection in array order (1-based / `A`-based), including empty ones.
-
 ## Minimal example
 
 A `"content-and-text"` node (an `IconCircle` / `HubAndSpoke` item):
@@ -88,3 +52,43 @@ A `"numbered-text"` node needs only `id`, `nodeType` and `text`.
 - `textWidth` must be a positive number or `null`: the 50–1280 clamp only applies to the editor's resize handle, so `0` or a tiny value is used as is and gives a collapsed text column. Leave it `null` to let the layout size the text.
 - `x`/`y` are only authored for `Timeline` milestones (fractions); writing px values there pushes the milestone off the element.
 - Keep `value` out of numbered/lettered nodes unless the parent supports editing it: where it is supported a stale `value` ("3" on the first node) is shown as is.
+
+## Rules and limits
+
+- Node geometry is marker + text: the marker's bounding box and the text column are unioned; the parent places the node by its registration point (marker center for marker types, shape center for shape types, text center for `"text"`), which is what connectors aim at.
+- Shape nodes: `"circle"` and `"diamond"` cap the width at 500 px, the others at 1180 px; the height follows the text unless `size` is an object.
+- `"flex-circle"` only puts the text inside the circle when `textDirection` is `"auto"` and the text fits the inscribed square at its synced size; otherwise it lays the text out on the right.
+- Numbered and lettered badges count every node of the collection in array order (1-based / `A`-based), including empty ones.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `id` (required) | string | uuid | Node key; connectors reference it (`source` / `target`), see `ConnectorGroup.md`. |
+| `nodeType` | string | see above | Picks the node class. |
+| `text` | object | `{ blocks: [...] }`, see `TextElement.md` | The node's text (block structure "header": a `title` block, optional `body` block). Required for every type but `"content"`. |
+| `textWidth` | number or null | px, 50–1280; `null` = auto width (then 200 px when a width is needed) | Width of the text column (marker types, `"text"`) or of the shape (shape types without `size`). |
+| `textDirection` | string | `"left"`, `"right"`, `"top"`, `"bottom"`, `"auto"`; default `"auto"` for marker types, `"right"` otherwise | Side of the marker the text sits on. `"auto"` picks the side facing away from the node's first connector (`"right"` when unconnected). Ignored by `"text"` and shape types. |
+| `size` | number | px, 50–400 (20–400 for `"content"`, 10+ for `"flex-circle"`); default from the theme (`markerSize`) | Marker diameter of the media/number/letter/flex-circle types. |
+| `size` | object | `{ width, height }` px | Shape types only: a fixed shape size instead of fitting the text. |
+| `color` | string | palette color (`"theme"`, `"accent1"`, …); default the parent's `collectionColor` | Marker / shape / icon frame color, and the default color of connectors leaving the node. |
+| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`; default theme element style | Fill style of shapes and media frames. Numbered/lettered markers are always filled; `"bullet-text"` and `"text"` ignore it. |
+| `content_type`, `content_value` | string | `"icon"` + icon key, `"image"` + asset id; see `ContentElement.md` | Media of `"content"` / `"content-and-text"` nodes, read directly from the node model. |
+| `frameType` | string | `"theme"`, `"none"`, `"circle"`, `"rect"`, `"rounded_rect"`, `"octagon"`, … | Frame of the media marker; `"theme"` follows the theme shape. |
+| `value` | object | `{ blocks: [{ type: "text", html: "1" }] }` | Badge text of `"numbered-text"` / `"lettered-text"`, only where the parent lets users edit it (annotation layers other than the timeline's, e.g. chart annotations); `IconCircle`, `HubAndSpoke` and `Timeline` derive it from the index and never read it. |
+| `hilited` | boolean | `false` | Emphasized node (collection item flag); `"flex-circle"` renders muted when hilited. |
+| `x`, `y` | number | parent-defined | Node position. `Timeline`: fractions 0–1 of the element, authored. `IconCircle` / `HubAndSpoke`: computed by the layout on every render, do not author. Legacy callout items: fractions, migrated to px callouts. |
+| `textPosition` | string | `"center"` | Rarely read; leave absent. |
+
+Legacy fields the 10.x migrations rewrite: `userSize` -> `textWidth`; `label` -> `value`; `title: { text }` / `blocks` (old text object) -> `text.blocks`. Do not write them.
+
+### Nested elements
+
+- `text` -> `TextElement.md` (title-and-body, auto width when `textWidth` is `null`, font size synced across sibling nodes in most parents).
+- `marker` -> dot (`"bullet-text"`), number/letter badge (`"numbered-text"`, `"lettered-text"`: a single-block `TextElement` named `value`), or `media` -> `FramedMediaElement.md` (`"content-and-text"`).
+- `content` -> `FramedMediaElement.md` (`"content"`).
+- `shape` -> the SVG shape (`"box"`, `"capsule"`, `"circle"`, `"diamond"`, `"flex-circle"`).

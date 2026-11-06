@@ -12,7 +12,67 @@ collection whose items are the slices; this file also covers its internal classe
   put the same fields directly on the item).
 - Slices: `<pie model>.data[]` (the collection property is `data`, not `items`).
 
-## Model fields
+## Minimal example
+
+`items[].childElement` of a `componentType: "PieChart"` cell (template `chart_pie`, single cell with
+`cellColor: "none"`):
+
+```json
+{
+  "isDonut": false,
+  "innerRadius": 0,
+  "format": "percent",
+  "sortValues": true,
+  "collectionColor": "theme-to-dark",
+  "legendPosition": "right",
+  "data": [
+    { "value": 45, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Enterprise" } ] } },
+    { "value": 30, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "SMB" } ] } },
+    { "value": 15, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Partners" } ] }, "emphasized": true },
+    { "value": 10, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Services" } ] } }
+  ]
+}
+```
+
+Donut: `"isDonut": true, "innerRadius": 50` (`innerRadius` is a percentage of the radius, 0–100; `0.5` is a hole
+you cannot see). `emphasized` pulls the slice 30 px out of the pie. A lone pie with `legendPosition: "right"` sits
+left of center and leaves the right of the slide empty: use `"bottom"`, or put a statistic cell beside it in a
+`dashboard`.
+
+## Pitfalls
+
+- The slice array is `data`, not `items`; `chartData`/`series` belong to `Chart` and are ignored here (you get
+  the default sample pie).
+- Values are plain numbers in `data[].value`; do not write strings or `{ "y": … }` points.
+- `legendPosition` must be exactly one of the four sides; `"off"`/`true` give no legend and labels on slices.
+- `format: "percent"` ignores `formatOptions.divideBy100`-style tricks: shares are always computed from the
+  total. Use `"number"` to show the raw numbers (e.g. revenue).
+- Leaving `chartScale` out is fine (auto-fit); setting it to `1` with outside labels clips the labels.
+- Stored examples contain stale `labelFormat`, `startRadius`, `offset`, `annotations` and per-slice
+  `accentColor`/`titleTextStyle`; none of them are needed.
+- Color names `"accentN"` beyond the theme's accents fall back to `"theme"`, so several slices can end up the
+  same color; prefer `"chart1"`…`"chart6"` or a `collectionColor` range.
+
+## Rules and limits
+
+- Minimum content size 150 x 150 px, otherwise the cell renders empty.
+- Slices below 1 % of the total are drawn at 1 % (the others are rescaled); if every value is 0 all slices are
+  set to 1 (equal shares); if all but one are 0 the last gets a hair-line slice flagged `showZeroFlag`.
+- `chartScale` is clamped to [0, 1] at build; when absent the first render runs an auto-fit (shrinking the
+  radius in 5 px steps up to 25 times) and stores the result.
+- Percent labels are `value / total`; `format: "number"` shows `value` as entered (apply `formatOptions`
+  for currency/decimals).
+- Migrations: `_migrate_10` (stored version < 10) sets `formatOptions.decimal = 2` for percent pies without
+  options; `_migrate_10_02` turns `color: "auto"` into `null` and sets `collectionColor` to `"<slide color>-to-dark"`.
+  Not run for models stored with `migrationVersion: 10.03`.
+- Legacy pre-10.02 dashboards stored the pie as `items[].piechart` with `elementType: "piechart"`; that shape is
+  only understood by the `Dashboard` migration.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
 
 | Field | Type | Values / default | Meaning |
 |---|---|---|---|
@@ -39,7 +99,7 @@ collection whose items are the slices; this file also covers its internal classe
 
 Plus the common fields, see `BaseElement.md`.
 
-## Nested elements
+### Nested elements
 
 - `data[]` -> `PieChartWedge` (one per slice, display order = `data` order, or descending value when
   `sortValues`): an SVG wedge path plus a `PieChartLabel`.
@@ -53,54 +113,3 @@ Plus the common fields, see `BaseElement.md`.
   list on the left/right, wrapping rows on top/bottom, 40 px gap from the pie.
 - Slice count: no minimum beyond 1; the data-import path caps at 15 slices (`PIE_CHART_MAX_ITEMS`); rendering
   itself does not cap, but more than ~8 slices run out of label space.
-
-## Rules and limits
-
-- Minimum content size 150 x 150 px, otherwise the cell renders empty.
-- Slices below 1 % of the total are drawn at 1 % (the others are rescaled); if every value is 0 all slices are
-  set to 1 (equal shares); if all but one are 0 the last gets a hair-line slice flagged `showZeroFlag`.
-- `chartScale` is clamped to [0, 1] at build; when absent the first render runs an auto-fit (shrinking the
-  radius in 5 px steps up to 25 times) and stores the result.
-- Percent labels are `value / total`; `format: "number"` shows `value` as entered (apply `formatOptions`
-  for currency/decimals).
-- Migrations: `_migrate_10` (stored version < 10) sets `formatOptions.decimal = 2` for percent pies without
-  options; `_migrate_10_02` turns `color: "auto"` into `null` and sets `collectionColor` to `"<slide color>-to-dark"`.
-  Not run for models stored with `migrationVersion: 10.03`.
-- Legacy pre-10.02 dashboards stored the pie as `items[].piechart` with `elementType: "piechart"`; that shape is
-  only understood by the `Dashboard` migration.
-
-## Minimal example
-
-`items[].childElement` of a `componentType: "PieChart"` cell (template `chart_pie`, single cell with
-`cellColor: "none"`):
-
-```json
-{
-  "isDonut": false,
-  "innerRadius": 0,
-  "format": "percent",
-  "sortValues": true,
-  "collectionColor": "theme-to-dark",
-  "legendPosition": "right",
-  "data": [
-    { "value": 45, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Enterprise" } ] } },
-    { "value": 30, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "SMB" } ] } },
-    { "value": 15, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Partners" } ] }, "emphasized": true },
-    { "value": 10, "label": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Services" } ] } }
-  ]
-}
-```
-
-## Pitfalls
-
-- The slice array is `data`, not `items`; `chartData`/`series` belong to `Chart` and are ignored here (you get
-  the default sample pie).
-- Values are plain numbers in `data[].value`; do not write strings or `{ "y": … }` points.
-- `legendPosition` must be exactly one of the four sides; `"off"`/`true` give no legend and labels on slices.
-- `format: "percent"` ignores `formatOptions.divideBy100`-style tricks: shares are always computed from the
-  total. Use `"number"` to show the raw numbers (e.g. revenue).
-- Leaving `chartScale` out is fine (auto-fit); setting it to `1` with outside labels clips the labels.
-- Stored examples contain stale `labelFormat`, `startRadius`, `offset`, `annotations` and per-slice
-  `accentColor`/`titleTextStyle`; none of them are needed.
-- Color names `"accentN"` beyond the theme's accents fall back to `"theme"`, so several slices can end up the
-  same color; prefer `"chart1"`…`"chart6"` or a `collectionColor` range.

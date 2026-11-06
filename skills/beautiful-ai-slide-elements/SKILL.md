@@ -12,9 +12,11 @@ How to use it:
 1. Start with `Slide.md`: the slide model as a whole (`template_id`, `states[0]` and its keys, the `layout` object).
 2. Find the template in the table below and read its root element's document, then the documents in "Also read" for the parts you are going to write.
 3. Read the building blocks the first time you write them: `TextElement.md` (every text field is a `{ blocks: [...] }` object), `ContentElement.md` with `Picture.md` / `Icon.md` (every image, logo or icon slot is a `content_type` + `content_value` pair), `CollectionElement.md` (every `items[]` array), `Header.md` and `SideBarContainer.md` (the header and the side tray that most templates allow).
-4. Cross-check with a real model of the template (`get_slide_examples`) and the template's `defaultData` (`list_slide_templates`), build the model, render it (`render_slide`) and fix what the render reports before saving.
+4. Build the model, render it (`render_slide`, or the save tools with `render: true`) and fix what the render reports before saving. When a document leaves you unsure of a template's shape, a real model of it (`get_slide_examples`) or its `defaultData` (`list_slide_templates`) settles it.
 
-The documents describe the current model. Stored slides also carry computed caches (text `blockBounds`, `textStyles`, …) and bookkeeping fields: never author those, the documents say which fields are yours to write.
+Every document has the same shape, in the order you need it: where the model lives, a minimal example, the pitfalls, the rules and limits, and last, under "Full reference", the complete field tables and the nested elements. The first four sections are what you need to write the element; read the full reference for a field the example does not show, or for its exact values and units.
+
+The documents describe the current model. Stored slides (`get_slide`) also carry computed caches (text `blockBounds`, `textStyles`, …) and bookkeeping fields: never author those, the documents say which fields are yours to write (`get_slide_examples` returns its examples without them).
 
 ## Templates and their elements
 

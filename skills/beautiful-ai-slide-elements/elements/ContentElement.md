@@ -21,58 +21,6 @@ writes **the parent's model**. The media fields therefore sit directly on the pa
 The only exceptions are parents that pass an explicit `model:` (e.g. `UserTestimonialAttribution` passes
 `model.content` and `model.logo`).
 
-## Model fields
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `content_type` | string | `"image"`, `"logo"`, `"icon"`, `"video"`, `"stock_video"`. Default: the parent's `defaultAssetType` option, else `"image"` | Picks the asset element class: `"image"` -> `Picture`, `"logo"` -> `Logo`, `"icon"` -> `Icon`, `"video"`/`"stock_video"` -> `VideoElement`. Other `AssetType` values (`"mixed"`, `"audio"`, `"map"`, `"font"`, `"svg"`) build nothing. |
-| `content_value` | string | Asset id for images/logos/videos (ids look like `<hex>-I`, `<hex>-L`, `<id>` for uploads, `<hex>-S_V` for stock video); icon key for icons (a key of the built-in icon catalog, e.g. `"star"`, `"thumbs-up"`). Default: none | The asset reference. Empty/absent for image, logo, icon (or no `content_type`) -> `hasValidAsset` is false and the slot renders the "add media" placeholder overlay. For videos the element is considered valid even when empty. |
-| `__generateImage` | object | `{ search, assetType, isGenerating, imageIntent, searchStock, pickIndex, imageSource, imageStyle, aspectRatio, ... }` | Request for the app/server to fill `content_value` with a generated or searched asset. While `isGenerating` is `true` the element renders a progress spinner ("Generating Image..." or "Picking Team Asset" when `imageSource` is `"team"`) instead of its asset, and `TextAndImage` counts the cell as "has image". **Authors who set `content_value` themselves must delete this object**; a leftover one re-triggers generation or shows a spinner forever. |
-| `iconColor` | string | Palette color name (`"primary"`, `"secondary"`, `"theme"`, `"accent1"`..`"accent10"`, `"white"`, `"black"`, ...). Default: see `Icon.md` | Icon color when `content_type` is `"icon"`. Read before `color`. |
-| `color` | string | palette color name | Fallback for the icon color (`iconColor ?? color ?? parent collection's collectionColor`). Legacy; `_migrate_10_02` copies `color` to `iconColor` for icons on authoring canvases. |
-| `frameType` | string | `"theme"` (resolve to the theme's `styleShape`), a DeviceFrames id, or absent | Only consulted when the parent has no `frameType` of its own; the parent's value wins. |
-| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`, `"none"` | Used only when `frameType` is set *and* is a Shape frame (`rect`, `circle`, `rounded_rect`, `octagon`, `none`); otherwise the parent's `decorationStyle` wins. |
-| `assetName` | string | free text | Display name carried along with the asset (export/import, image block labels). Not needed for rendering. |
-| `assetProps` | object | see `VideoElement.md` | Playback settings and `originalSize` for videos. Carried but ignored for images. |
-
-All crop/scale/filter fields (`aoiLeft`..`aoiBottom`, `scale`, `flipHorizontal`, `filter`, `filterBrightness`,
-`filterContrast`, `filterBlur`, `filterStrength`, `mediaOpacity`, `assetWidth`, `assetHeight`, `isDefaultTransform`,
-`kenBurnsEffect`, `enableFaceDetection`, `altText`) are read by the asset child, see `MediaElement.md`,
-`Picture.md`, `VideoElement.md`; `iconScale` is read by `Icon.md`. `deleteAsset()` (the UI "remove image" action)
-deletes `content_value`, `content_type`, `aoi*`, `assetProps`, `assetName`, `assetWidth`, `assetHeight`, `filter`,
-`filterBlur`, `filterContrast`, `scale`, `mediaOpacity`.
-
-## Nested elements
-
-- `asset` -> `Picture.md` when `content_type` is `"image"` (options: `allowImageScaling` default true, `allowBackdrop`
-  from parent).
-- `asset` -> `Logo` (see `Picture.md`, section "Logos") when `content_type` is `"logo"`; default scale 0.66 unless the
-  parent passes `defaultLogoScale` (LogoGrid passes its `defaultLogoScale`).
-- `asset` -> `Icon.md` when `content_type` is `"icon"`.
-- `asset` -> `VideoElement.md` when `content_type` is `"video"` or `"stock_video"`.
-
-The child is rebuilt whenever `content_type` changes; its type is decided at build time from
-`content_type || options.defaultAssetType || "image"`.
-
-## Rules and limits
-
-- Size: the element fills the size its parent gives it; the asset child is centered in it. Icons are always "fit"
-  (whole glyph visible); images fill by default (see `MediaElement.md`). Logos report a 200x200 content size.
-- `hasValidAsset`: for `"image"`, `"logo"`, `"icon"` and for a missing `content_type` it requires a non-empty
-  `content_value` **and** a successfully loaded asset (a `Picture` whose load failed makes it invalid -> placeholder
-  overlay). For `"video"`/`"stock_video"` it is always true.
-- Background/alpha: `isBackgroundVisible` is true for icons, for assets with alpha (`hasAlpha` on the asset record),
-  and for images scaled below fill when `allowImageScaling` is on. `hasSolidBackground` comes from the asset record
-  (`hasSolidBackground` / `imageBackgroundColor`), not from the model. Logos never get a dark overlay color; images
-  with a `content_value` (or a generating `__generateImage`) set the element's background color to
-  `"background-image"` (dark), which is why text over an image resolves to white.
-- Icon coloring (`_applyColors`): with a filled, colored decoration the icon becomes `primary` on that color; with a
-  `muted` / `fillAndStroke` decoration it takes the decoration color; without decoration and with `allowColorOnColor`
-  it uses `iconColor ?? color ?? collectionColor`. Otherwise `Icon` picks its own color (see `Icon.md`).
-- Migration `_migrate_10_02`: on authoring canvases, icons get `iconColor = color` and `color` is deleted.
-- Export/import: `content_type`, `content_value`, `assetName`, `assetProps` plus every other model field except
-  `frameType` and `text` travel with the asset when a slide is converted between templates.
-
 ## Minimal example
 
 ```json
@@ -114,3 +62,59 @@ Icon slot:
 `ContentItem` is unrelated to `ContentElement` despite the name: it is the node of the collection-based diagrams
 (hub-and-spoke, icon circle, timeline milestones), see `ContentItem.md`. Its media node types hold a
 `FramedMediaElement` whose media fields live on the node item itself (`content_type`, `content_value`).
+
+## Rules and limits
+
+- Size: the element fills the size its parent gives it; the asset child is centered in it. Icons are always "fit"
+  (whole glyph visible); images fill by default (see `MediaElement.md`). Logos report a 200x200 content size.
+- `hasValidAsset`: for `"image"`, `"logo"`, `"icon"` and for a missing `content_type` it requires a non-empty
+  `content_value` **and** a successfully loaded asset (a `Picture` whose load failed makes it invalid -> placeholder
+  overlay). For `"video"`/`"stock_video"` it is always true.
+- Background/alpha: `isBackgroundVisible` is true for icons, for assets with alpha (`hasAlpha` on the asset record),
+  and for images scaled below fill when `allowImageScaling` is on. `hasSolidBackground` comes from the asset record
+  (`hasSolidBackground` / `imageBackgroundColor`), not from the model. Logos never get a dark overlay color; images
+  with a `content_value` (or a generating `__generateImage`) set the element's background color to
+  `"background-image"` (dark), which is why text over an image resolves to white.
+- Icon coloring (`_applyColors`): with a filled, colored decoration the icon becomes `primary` on that color; with a
+  `muted` / `fillAndStroke` decoration it takes the decoration color; without decoration and with `allowColorOnColor`
+  it uses `iconColor ?? color ?? collectionColor`. Otherwise `Icon` picks its own color (see `Icon.md`).
+- Migration `_migrate_10_02`: on authoring canvases, icons get `iconColor = color` and `color` is deleted.
+- Export/import: `content_type`, `content_value`, `assetName`, `assetProps` plus every other model field except
+  `frameType` and `text` travel with the asset when a slide is converted between templates.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `content_type` | string | `"image"`, `"logo"`, `"icon"`, `"video"`, `"stock_video"`. Default: the parent's `defaultAssetType` option, else `"image"` | Picks the asset element class: `"image"` -> `Picture`, `"logo"` -> `Logo`, `"icon"` -> `Icon`, `"video"`/`"stock_video"` -> `VideoElement`. Other `AssetType` values (`"mixed"`, `"audio"`, `"map"`, `"font"`, `"svg"`) build nothing. |
+| `content_value` | string | Asset id for images/logos/videos (ids look like `<hex>-I`, `<hex>-L`, `<id>` for uploads, `<hex>-S_V` for stock video); icon key for icons (a key of the built-in icon catalog, e.g. `"star"`, `"thumbs-up"`). Default: none | The asset reference. Empty/absent for image, logo, icon (or no `content_type`) -> `hasValidAsset` is false and the slot renders the "add media" placeholder overlay. For videos the element is considered valid even when empty. |
+| `__generateImage` | object | `{ search, assetType, isGenerating, imageIntent, searchStock, pickIndex, imageSource, imageStyle, aspectRatio, ... }` | Request for the app/server to fill `content_value` with a generated or searched asset. While `isGenerating` is `true` the element renders a progress spinner ("Generating Image..." or "Picking Team Asset" when `imageSource` is `"team"`) instead of its asset, and `TextAndImage` counts the cell as "has image". **Authors who set `content_value` themselves must delete this object**; a leftover one re-triggers generation or shows a spinner forever. |
+| `iconColor` | string | Palette color name (`"primary"`, `"secondary"`, `"theme"`, `"accent1"`..`"accent10"`, `"white"`, `"black"`, ...). Default: see `Icon.md` | Icon color when `content_type` is `"icon"`. Read before `color`. |
+| `color` | string | palette color name | Fallback for the icon color (`iconColor ?? color ?? parent collection's collectionColor`). Legacy; `_migrate_10_02` copies `color` to `iconColor` for icons on authoring canvases. |
+| `frameType` | string | `"theme"` (resolve to the theme's `styleShape`), a DeviceFrames id, or absent | Only consulted when the parent has no `frameType` of its own; the parent's value wins. |
+| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`, `"none"` | Used only when `frameType` is set *and* is a Shape frame (`rect`, `circle`, `rounded_rect`, `octagon`, `none`); otherwise the parent's `decorationStyle` wins. |
+| `assetName` | string | free text | Display name carried along with the asset (export/import, image block labels). Not needed for rendering. |
+| `assetProps` | object | see `VideoElement.md` | Playback settings and `originalSize` for videos. Carried but ignored for images. |
+
+All crop/scale/filter fields (`aoiLeft`..`aoiBottom`, `scale`, `flipHorizontal`, `filter`, `filterBrightness`,
+`filterContrast`, `filterBlur`, `filterStrength`, `mediaOpacity`, `assetWidth`, `assetHeight`, `isDefaultTransform`,
+`kenBurnsEffect`, `enableFaceDetection`, `altText`) are read by the asset child, see `MediaElement.md`,
+`Picture.md`, `VideoElement.md`; `iconScale` is read by `Icon.md`. `deleteAsset()` (the UI "remove image" action)
+deletes `content_value`, `content_type`, `aoi*`, `assetProps`, `assetName`, `assetWidth`, `assetHeight`, `filter`,
+`filterBlur`, `filterContrast`, `scale`, `mediaOpacity`.
+
+### Nested elements
+
+- `asset` -> `Picture.md` when `content_type` is `"image"` (options: `allowImageScaling` default true, `allowBackdrop`
+  from parent).
+- `asset` -> `Logo` (see `Picture.md`, section "Logos") when `content_type` is `"logo"`; default scale 0.66 unless the
+  parent passes `defaultLogoScale` (LogoGrid passes its `defaultLogoScale`).
+- `asset` -> `Icon.md` when `content_type` is `"icon"`.
+- `asset` -> `VideoElement.md` when `content_type` is `"video"` or `"stock_video"`.
+
+The child is rebuilt whenever `content_type` changes; its type is decided at build time from
+`content_type || options.defaultAssetType || "image"`.

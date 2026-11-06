@@ -14,40 +14,6 @@ for bullet columns use `TextList`.
 - `states[0].header` – optional slide header (`Header.md`); `states[0].tray` – optional image tray
   (`long_bio` default: `layout.trayLayout: "left_tray"`, `tray: { trayWidth: 567, items: [{}] }`).
 
-## Model fields
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `text` (required) | text object | `{ blocks: [...] }`, see `TextElement.md` | The content. Freeform structure; allowed block styles: `heading`, `title`, `body`, `bulleted`, `caption`, `label`, plus `media`, `divider`, `code`, `equation`. Default block style is `body`. (`headline`/`bigtext` are not allowed here.) |
-| `textAlign` | string | `"left"` (schema default), `"center"`, `"right"`, `"justify"` | Alignment of all blocks; per-block `textAlign` overrides are honoured. |
-| `columns` | number | integer ≥ 1; default `1` | Flows the blocks into N CSS columns of equal width (text wraps from column to column). |
-| `verticalAlign` | string | `"top"` (default), `"middle"`, `"bottom"` | Vertical placement of the text inside the primary area. |
-| `accentColor` | string | palette color name; default slide/theme color | Color of `<font class="emphasized">` runs. |
-
-Plus the common fields, see `BaseElement.md`. Legacy keys found in stored examples and ignored by v10:
-`backdropPadding`, `verticalGap`, `userFontScale`, `listStyle`, `blocks` (old content-block array, migrated
-into `text.blocks` and deleted).
-
-## Nested elements
-
-- `text` -> `TextElement` (`TextElement.md`): freeform, auto-fit (`scaleTextToFit`), alignment allowed,
-  columns = `columns`, blocks can be added. No other children.
-
-## Rules and limits
-
-- The text is laid out in the full primary area (minus a 30px style margin) and scaled down (to 50% minimum)
-  until it fits; beyond that the slide reports an unfit layout. There is no hard character limit; the stored
-  examples stay within roughly 3–6 blocks of short paragraphs.
-- With `columns > 1` the text is measured against the fixed height and wraps across columns; a single very
-  long block can span columns.
-- Numbered bullets (`textStyle: "bulleted"`, `listStyle: "numbered"`) restart after any non-list block.
-- Template capabilities: `text` – `allowColorful: false`; header allowed (`layout.headerPosition` `"top"`,
-  `"left"`, `"none"`, ...), image tray allowed (`layout.trayLayout` `"left_tray"`, `"right_tray"`,
-  `"left_inline"`, `"right_inline"`, `"none"`). `long_bio` – `showHeader: true`, `allowColorful: true`,
-  default left tray of 567px.
-- Migration `_migrate_10`: legacy `blocks` (content blocks with `content`/`bulletpoint`/`icon`) are converted
-  to `text.blocks` (`TextFrameBox.migrateToV10`), then `blocks` is deleted.
-
 ## Minimal example
 
 Template `text`, header on top, three heading/body pairs separated by dividers:
@@ -87,3 +53,41 @@ Template `text`, header on top, three heading/body pairs separated by dividers:
   setting (there is no backdrop on `TextSlide`).
 - Do not copy `backdropPadding`/`verticalGap` from examples; they are leftovers of the pre-v10 content-block
   container.
+
+## Rules and limits
+
+- The text is laid out in the full primary area (minus a 30px style margin) and scaled down (to 50% minimum)
+  until it fits; beyond that the slide reports an unfit layout. There is no hard character limit; the stored
+  examples stay within roughly 3–6 blocks of short paragraphs.
+- With `columns > 1` the text is measured against the fixed height and wraps across columns; a single very
+  long block can span columns.
+- Numbered bullets (`textStyle: "bulleted"`, `listStyle: "numbered"`) restart after any non-list block.
+- Template capabilities: `text` – `allowColorful: false`; header allowed (`layout.headerPosition` `"top"`,
+  `"left"`, `"none"`, ...), image tray allowed (`layout.trayLayout` `"left_tray"`, `"right_tray"`,
+  `"left_inline"`, `"right_inline"`, `"none"`). `long_bio` – `showHeader: true`, `allowColorful: true`,
+  default left tray of 567px.
+- Migration `_migrate_10`: legacy `blocks` (content blocks with `content`/`bulletpoint`/`icon`) are converted
+  to `text.blocks` (`TextFrameBox.migrateToV10`), then `blocks` is deleted.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `text` (required) | text object | `{ blocks: [...] }`, see `TextElement.md` | The content. Freeform structure; allowed block styles: `heading`, `title`, `body`, `bulleted`, `caption`, `label`, plus `media`, `divider`, `code`, `equation`. Default block style is `body`. (`headline`/`bigtext` are not allowed here.) |
+| `textAlign` | string | `"left"` (schema default), `"center"`, `"right"`, `"justify"` | Alignment of all blocks; per-block `textAlign` overrides are honoured. |
+| `columns` | number | integer ≥ 1; default `1` | Flows the blocks into N CSS columns of equal width (text wraps from column to column). |
+| `verticalAlign` | string | `"top"` (default), `"middle"`, `"bottom"` | Vertical placement of the text inside the primary area. |
+| `accentColor` | string | palette color name; default slide/theme color | Color of `<font class="emphasized">` runs. |
+
+Plus the common fields, see `BaseElement.md`. Legacy keys found in stored examples and ignored by v10:
+`backdropPadding`, `verticalGap`, `userFontScale`, `listStyle`, `blocks` (old content-block array, migrated
+into `text.blocks` and deleted).
+
+### Nested elements
+
+- `text` -> `TextElement` (`TextElement.md`): freeform, auto-fit (`scaleTextToFit`), alignment allowed,
+  columns = `columns`, blocks can be added. No other children.

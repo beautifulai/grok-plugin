@@ -11,24 +11,40 @@ Same object as the owning `ContentElement`, e.g. `states[0].primary.items[].chil
 `states[0].primary.items[]` (Team / PhotoTextList / LogoGrid items), `states[0].primary.items[].content`
 (UserTestimonial photo), `states[0].tray.items[].childElement` (image trays).
 
-## Model fields
+## Minimal example
 
-All of `MediaElement.md` (`aoi*`, `scale`, `isDefaultTransform`, `assetWidth/Height`, `flipHorizontal`, `filter`,
-`filterStrength`, `filterBrightness`, `filterContrast`, `filterBlur`, `mediaOpacity`, `backgroundColor`, `altText`,
-`enableFaceDetection`), plus:
+Image:
 
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `content_value` (required) | string | image asset id (`<hex>-I`) or logo asset id (`<hex>-L`) | Loaded through the image asset store (`getAssetById(id, "image")`); the id suffix decides the real asset type. Load failure -> `hasMedia = false` -> the owning `ContentElement` shows its placeholder overlay. |
-| `kenBurnsEffect` | string | `"none"` (default), `"zoom_in"`, `"zoom_out"`, `"pan_left"`, `"pan_right"` | 30 s looping CSS animation, only while the slide is the current canvas (not in thumbnails/exports). |
+```json
+{ "content_type": "image", "content_value": "27e64e20b02112994e8a91b8a11586434b89bf2d44c8bac38fccbc42d010df9e-I" }
+```
 
-Asset-record properties the renderer uses but that are **not** in the slide model: `w`/`h` (pixel size),
-`fileType` (`gif` and `svg` always load the original file; GIFs render as an empty placeholder on non-current
-canvases), `hasAlpha`, `hasSolidBackground`, `imageBackgroundColor`, `modifiedAt`, `isGenerated`.
+Logo (LogoGrid item):
 
-## Nested elements
+```json
+{ "content_type": "logo", "content_value": "b1d101eb2360dfccc208cf9ff35cf26c889b6b7aa0d6d5ee6737d39c22b5c520-L" }
+```
 
-None.
+Image with a tint and a slow zoom:
+
+```json
+{
+  "content_type": "image",
+  "content_value": "27e64e20b02112994e8a91b8a11586434b89bf2d44c8bac38fccbc42d010df9e-I",
+  "filter": "theme",
+  "filterStrength": 0.8,
+  "kenBurnsEffect": "zoom_in"
+}
+```
+
+## Pitfalls
+
+- A wrong or foreign `content_value` does not throw; the slot silently shows the "add image" placeholder (and in
+  `TextAndImage` the cell still counts as "has image", so text keeps white-on-dark styling).
+- Do not set `backgroundColor` on logos; it is ignored. Use the parent's backdrop switch instead.
+- `kenBurnsEffect` only animates in the live editor/player; screenshots and exports show the still crop.
+- SVG and GIF assets ignore the size optimisation; very large SVG logos still render fine but keep `scale` small.
+- Carrying `aoi*`/`assetWidth`/`assetHeight` from one asset to another discards the crop (see `MediaElement.md`).
 
 ## Rules and limits
 
@@ -67,37 +83,25 @@ rectangle behind the logo; `UserTestimonial` passes the item's `showLogoBackdrop
 plain `ContentElement` whose model is the `logo` sub-object (`content_type`, `content_value`, `aoi*`, `logoScale`
 for UserTestimonial).
 
-## Minimal example
+## Full reference
 
-Image:
+The complete field tables and the nested elements, for the fields the minimal example does not show.
 
-```json
-{ "content_type": "image", "content_value": "27e64e20b02112994e8a91b8a11586434b89bf2d44c8bac38fccbc42d010df9e-I" }
-```
+### Model fields
 
-Logo (LogoGrid item):
+All of `MediaElement.md` (`aoi*`, `scale`, `isDefaultTransform`, `assetWidth/Height`, `flipHorizontal`, `filter`,
+`filterStrength`, `filterBrightness`, `filterContrast`, `filterBlur`, `mediaOpacity`, `backgroundColor`, `altText`,
+`enableFaceDetection`), plus:
 
-```json
-{ "content_type": "logo", "content_value": "b1d101eb2360dfccc208cf9ff35cf26c889b6b7aa0d6d5ee6737d39c22b5c520-L" }
-```
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `content_value` (required) | string | image asset id (`<hex>-I`) or logo asset id (`<hex>-L`) | Loaded through the image asset store (`getAssetById(id, "image")`); the id suffix decides the real asset type. Load failure -> `hasMedia = false` -> the owning `ContentElement` shows its placeholder overlay. |
+| `kenBurnsEffect` | string | `"none"` (default), `"zoom_in"`, `"zoom_out"`, `"pan_left"`, `"pan_right"` | 30 s looping CSS animation, only while the slide is the current canvas (not in thumbnails/exports). |
 
-Image with a tint and a slow zoom:
+Asset-record properties the renderer uses but that are **not** in the slide model: `w`/`h` (pixel size),
+`fileType` (`gif` and `svg` always load the original file; GIFs render as an empty placeholder on non-current
+canvases), `hasAlpha`, `hasSolidBackground`, `imageBackgroundColor`, `modifiedAt`, `isGenerated`.
 
-```json
-{
-  "content_type": "image",
-  "content_value": "27e64e20b02112994e8a91b8a11586434b89bf2d44c8bac38fccbc42d010df9e-I",
-  "filter": "theme",
-  "filterStrength": 0.8,
-  "kenBurnsEffect": "zoom_in"
-}
-```
+### Nested elements
 
-## Pitfalls
-
-- A wrong or foreign `content_value` does not throw; the slot silently shows the "add image" placeholder (and in
-  `TextAndImage` the cell still counts as "has image", so text keeps white-on-dark styling).
-- Do not set `backgroundColor` on logos; it is ignored. Use the parent's backdrop switch instead.
-- `kenBurnsEffect` only animates in the live editor/player; screenshots and exports show the still crop.
-- SVG and GIF assets ignore the size optimisation; very large SVG logos still render fine but keep `scale` small.
-- Carrying `aoi*`/`assetWidth`/`assetHeight` from one asset to another discards the crop (see `MediaElement.md`).
+None.

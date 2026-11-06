@@ -18,74 +18,6 @@ source line enabled by `layout.showElementAttribution`). None of them is a templ
 - `states[0].elementAttribution` — `ElementAttribution`; its text model is
   `states[0].elementAttribution.elementAttribution`.
 
-## Model fields
-
-`BottomTray` (`layout.elementTextBlockPosition: "tray"`):
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `items` (required) | object[] | 1–5 entries in practice (presets); `minItemCount` 0 | One `LayoutContainerItem` per cell, left to right. Missing entries are padded with placeholders (`componentType: "GridPlaceholder"`) up to the number of `gridLayout.cells`; extra entries are dropped. |
-| `items[].componentType` | string | `"TextAndImage"` | The cell component; the tray is built for text cells. Absent → grey placeholder. |
-| `items[].cellColor` | string | palette colour name or `"none"`; the editor / generator use `"background_accent"` | Cell background. On old slides `_migrate_10_02` re-resolves it against the slide background. |
-| `items[].childElement` | object | `TextAndImage` model: `text: { blocks }` (default block style `"title"`), `backdropPadding` (default 30), `verticalAlign` (`"middle"`), optionally `textAlign`, `accentColor`, a picture | The cell content. The available "text ideas" are limited to `title`. |
-| `items[].id` | string | uuid; generated when missing | Item identity (`CollectionElement.md`). |
-| `layoutEngineType` | string | `"bottom_tray"` (schema default) | Layout engine; keep it. |
-| `gridLayout` | object | `{ cols, rows, cells }`; default one cell (`cols: 12, rows: 12, cells: [{0,0,12,12}]`). Presets: `cols: 60, rows: 2` with 1–5 cells of width 60 / 30 / 20 / 15 / 12 and height 2 side by side | Cell split; the number of `cells` is the number of rendered cells. |
-| `trayHeight` | number (px) \| null | default `null` = automatic; editor range 70–300 | Fixed tray height. Automatic height is 70 px when no cell shows text, otherwise the tallest cell text plus 2 x `backdropPadding`. |
-| `showGutter` | boolean | default `false` | 10 px gaps between cells. |
-| `elementTextBlock`, `color`, `backgroundColor`, `textAlign`, `accentColor` | – | leftovers of the inline form | Ignored by `BottomTray` (the editor converts the inline blocks into the first cell's text when switching to `"tray"`). Harmless, but do not rely on them. |
-
-Plus the common fields of `GridLayoutContainer.md` and `BaseElement.md`.
-
-`ElementTextBlock` (`layout.elementTextBlockPosition: "inline"`), a `TextElement`:
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `elementTextBlock` (required for content) | object | `{ "blocks": [...] }` (`TextElement.md`); absent → one empty `body` block | The text. Free-form structure: allowed `textStyle` values `"heading"`, `"title"`, `"body"`, `"caption"`, `"label"`; default `"body"`; `title` blocks get `evenBreak: true`. The default theme centres it and allows 5 lines. |
-| `textAlign` | string | `"left"`, `"center"`, `"right"`; default from the theme (`center`) | Horizontal alignment. |
-| `accentColor` | string | palette colour name; default `"theme"` (set by migration) | Colour of emphasized text. |
-| `color` / `backgroundColor` | string | schema default `backgroundColor: "background_accent"`, renamed to `color` on load | Legacy background colour of the pre-v10 text tray; the inline block has no background in the default theme, so it has no visible effect. Omit. |
-| `items`, `gridLayout`, `layoutEngineType`, `trayHeight` | – | leftovers of the tray form | Ignored by `ElementTextBlock`. |
-
-`ElementAttribution` (`layout.showElementAttribution: true`), a `TextElement`:
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `elementAttribution` (required for content) | object | `{ "blocks": [...] }`; absent → one empty `body` block with the placeholder "Type attribution or footnote" | The footnote / source text. Allowed `textStyle` values `"body"`, `"title"`, `"caption"`; default `"body"`. Links (`<a href>`) are allowed in `html`. |
-| `textAlign` | string | `"left"`, `"center"`, `"right"`; default `"right"` (theme) | Horizontal alignment. |
-| `accentColor` | string | palette colour name; default `"theme"` | Colour of emphasized text. |
-
-## Nested elements
-
-- `BottomTray.items[]` -> `LayoutContainerItem` (`LayoutContainerItem.md`) -> `childElement` ->
-  `TextAndImage` (`TextAndImage.md`). Default item is a `GridPlaceholder`, so always give `componentType`.
-- `ElementTextBlock` and `ElementAttribution` are `TextElement`s (`TextElement.md`) bound to the keys
-  `elementTextBlock` / `elementAttribution` of their model object; they have no children of their own.
-
-## Rules and limits
-
-- `layout.elementTextBlockPosition` decides the class: `"tray"` → `BottomTray`, `"inline"` → `ElementTextBlock`,
-  `"none"` → nothing (the model key may stay in the slide, it is ignored). Legacy `"above"` is migrated to
-  `"none"`, `"below"` to `"inline"`; `"grid"` is not handled (the text block is built but never positioned):
-  use only the three values.
-- Placement: the tray is a full-width band at the bottom of the content area (between side trays); the
-  primary element and a left header shrink by its height. The inline block sits below the primary element
-  with 50 px side margins; when a left header has a background colour the block is confined to the primary
-  element's width. The attribution is a line at the bottom of the primary area with 50 px side margins
-  (above the tray, with 20 px margins, when the tray form is used); its width is reduced by 140 px when the
-  presentation shows the Beautiful.ai watermark.
-- `"tray"` suppresses the footer (`Footer.md`); `"inline"` and the attribution do not. With an attribution the
-  inline block gets 20 px extra bottom padding and the attribution takes the tray's background colour in tray
-  mode.
-- Tray height: `trayHeight` (editor clamps 70–300) or automatic; the tray's minimum height is 70 px and it is
-  subtracted from the space available to the primary element, so a tall tray can make the layout not fit.
-- The template flags `allowElementTextTray` / `allowElementTextInline` / `allowElementAttribution` (false for
-  `title`, `contactus`, `business_card`, `authoring`, `ppt-slide`, `slidePlaceholder`; attribution also
-  false for `agenda`, `image`, `wordCloud`, `picture_picture`, `imagegrid`, `culturegrid`, `aboutUs`) only
-  gate the editor's layout menu; `CanvasElement` builds whatever `layout` asks for.
-- Deleting the last tray cell in the editor resets `layout.elementTextBlockPosition` to `"none"`.
-- Shared-model export keys: `bottomTray`, `layoutTextBlocks`, `layoutAttribution`.
-
 ## Minimal example
 
 Bottom tray with one text cell (`layout.elementTextBlockPosition: "tray"`):
@@ -149,3 +81,75 @@ Attribution (`layout.showElementAttribution: true`):
   from switching in the editor; copy only the form matching your `elementTextBlockPosition`.
 - Do not copy `text`, `styles`, `hyphenation`, `ligatures`, `fontScale` next to `blocks` from old examples
   (pre-blocks text cache); only `blocks` is read.
+
+## Rules and limits
+
+- `layout.elementTextBlockPosition` decides the class: `"tray"` → `BottomTray`, `"inline"` → `ElementTextBlock`,
+  `"none"` → nothing (the model key may stay in the slide, it is ignored). Legacy `"above"` is migrated to
+  `"none"`, `"below"` to `"inline"`; `"grid"` is not handled (the text block is built but never positioned):
+  use only the three values.
+- Placement: the tray is a full-width band at the bottom of the content area (between side trays); the
+  primary element and a left header shrink by its height. The inline block sits below the primary element
+  with 50 px side margins; when a left header has a background colour the block is confined to the primary
+  element's width. The attribution is a line at the bottom of the primary area with 50 px side margins
+  (above the tray, with 20 px margins, when the tray form is used); its width is reduced by 140 px when the
+  presentation shows the Beautiful.ai watermark.
+- `"tray"` suppresses the footer (`Footer.md`); `"inline"` and the attribution do not. With an attribution the
+  inline block gets 20 px extra bottom padding and the attribution takes the tray's background colour in tray
+  mode.
+- Tray height: `trayHeight` (editor clamps 70–300) or automatic; the tray's minimum height is 70 px and it is
+  subtracted from the space available to the primary element, so a tall tray can make the layout not fit.
+- The template flags `allowElementTextTray` / `allowElementTextInline` / `allowElementAttribution` (false for
+  `title`, `contactus`, `business_card`, `authoring`, `ppt-slide`, `slidePlaceholder`; attribution also
+  false for `agenda`, `image`, `wordCloud`, `picture_picture`, `imagegrid`, `culturegrid`, `aboutUs`) only
+  gate the editor's layout menu; `CanvasElement` builds whatever `layout` asks for.
+- Deleting the last tray cell in the editor resets `layout.elementTextBlockPosition` to `"none"`.
+- Shared-model export keys: `bottomTray`, `layoutTextBlocks`, `layoutAttribution`.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+`BottomTray` (`layout.elementTextBlockPosition: "tray"`):
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `items` (required) | object[] | 1–5 entries in practice (presets); `minItemCount` 0 | One `LayoutContainerItem` per cell, left to right. Missing entries are padded with placeholders (`componentType: "GridPlaceholder"`) up to the number of `gridLayout.cells`; extra entries are dropped. |
+| `items[].componentType` | string | `"TextAndImage"` | The cell component; the tray is built for text cells. Absent → grey placeholder. |
+| `items[].cellColor` | string | palette colour name or `"none"`; the editor / generator use `"background_accent"` | Cell background. On old slides `_migrate_10_02` re-resolves it against the slide background. |
+| `items[].childElement` | object | `TextAndImage` model: `text: { blocks }` (default block style `"title"`), `backdropPadding` (default 30), `verticalAlign` (`"middle"`), optionally `textAlign`, `accentColor`, a picture | The cell content. The available "text ideas" are limited to `title`. |
+| `items[].id` | string | uuid; generated when missing | Item identity (`CollectionElement.md`). |
+| `layoutEngineType` | string | `"bottom_tray"` (schema default) | Layout engine; keep it. |
+| `gridLayout` | object | `{ cols, rows, cells }`; default one cell (`cols: 12, rows: 12, cells: [{0,0,12,12}]`). Presets: `cols: 60, rows: 2` with 1–5 cells of width 60 / 30 / 20 / 15 / 12 and height 2 side by side | Cell split; the number of `cells` is the number of rendered cells. |
+| `trayHeight` | number (px) \| null | default `null` = automatic; editor range 70–300 | Fixed tray height. Automatic height is 70 px when no cell shows text, otherwise the tallest cell text plus 2 x `backdropPadding`. |
+| `showGutter` | boolean | default `false` | 10 px gaps between cells. |
+| `elementTextBlock`, `color`, `backgroundColor`, `textAlign`, `accentColor` | – | leftovers of the inline form | Ignored by `BottomTray` (the editor converts the inline blocks into the first cell's text when switching to `"tray"`). Harmless, but do not rely on them. |
+
+Plus the common fields of `GridLayoutContainer.md` and `BaseElement.md`.
+
+`ElementTextBlock` (`layout.elementTextBlockPosition: "inline"`), a `TextElement`:
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `elementTextBlock` (required for content) | object | `{ "blocks": [...] }` (`TextElement.md`); absent → one empty `body` block | The text. Free-form structure: allowed `textStyle` values `"heading"`, `"title"`, `"body"`, `"caption"`, `"label"`; default `"body"`; `title` blocks get `evenBreak: true`. The default theme centres it and allows 5 lines. |
+| `textAlign` | string | `"left"`, `"center"`, `"right"`; default from the theme (`center`) | Horizontal alignment. |
+| `accentColor` | string | palette colour name; default `"theme"` (set by migration) | Colour of emphasized text. |
+| `color` / `backgroundColor` | string | schema default `backgroundColor: "background_accent"`, renamed to `color` on load | Legacy background colour of the pre-v10 text tray; the inline block has no background in the default theme, so it has no visible effect. Omit. |
+| `items`, `gridLayout`, `layoutEngineType`, `trayHeight` | – | leftovers of the tray form | Ignored by `ElementTextBlock`. |
+
+`ElementAttribution` (`layout.showElementAttribution: true`), a `TextElement`:
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `elementAttribution` (required for content) | object | `{ "blocks": [...] }`; absent → one empty `body` block with the placeholder "Type attribution or footnote" | The footnote / source text. Allowed `textStyle` values `"body"`, `"title"`, `"caption"`; default `"body"`. Links (`<a href>`) are allowed in `html`. |
+| `textAlign` | string | `"left"`, `"center"`, `"right"`; default `"right"` (theme) | Horizontal alignment. |
+| `accentColor` | string | palette colour name; default `"theme"` | Colour of emphasized text. |
+
+### Nested elements
+
+- `BottomTray.items[]` -> `LayoutContainerItem` (`LayoutContainerItem.md`) -> `childElement` ->
+  `TextAndImage` (`TextAndImage.md`). Default item is a `GridPlaceholder`, so always give `componentType`.
+- `ElementTextBlock` and `ElementAttribution` are `TextElement`s (`TextElement.md`) bound to the keys
+  `elementTextBlock` / `elementAttribution` of their model object; they have no children of their own.

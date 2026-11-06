@@ -47,38 +47,35 @@ The callout reads **the same object** as its container entry; all fields below s
 Do not put callout fields under an `element` sub-object: the container would hand that object to the callout while
 it still reads `calloutType` from the entry (behaviour not verified; keep everything on the entry).
 
-## Model fields
+## Minimal example
 
-Container fields (`id`, `type: "callout"`, `calloutType`, `rotation`, `opacity`, `isHidden`, `isLocked`, `shadow`,
-`groupIds`, `name`) are in `AuthoringElementContainer.md`. What every callout class reads or writes:
+One entry of each family on a `flow_chart` (`states[0].primary.elements[]`), from the recipe and the class defaults:
 
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `x`, `y` (required) | number | px inside the canvas; `NaN` -> slide centre; on `flow_chart` both `0`/missing -> near the canvas centre (`canvas size / 2 − box size / 2`) | Position of the **reference point**: the centre of the shape/text/media box for `"box"`, `"circle"`, `"diamond"`, `"capsule"`, `"text"`, `"content"`; the **marker centre** for `"bullet-text"`, `"numbered-text"`, `"lettered-text"`, `"timeline-text"`, `"content-and-text"`, `"flex-circle"`. The box is laid out around that point. |
-| `width`, `height` | number | px; absent -> canvas size is used for the first layout | Size of the box. Rewritten on every render by every class except the shapes (see "Fit to contents" below), so author them for shapes and treat them as cache elsewhere. |
-| `text` | object | `{ "blocks": [...] }`; absent or empty: marker/text callouts write one empty `"title"` block (editor placeholder), shapes render no text, `"content"` ignores it | The text, `TextElement.md` block format; blocks get `id`, `html`, `type: "text"` filled in when missing. Block structure "header": allowed `textStyle` `"heading"`, `"title"`, `"body"`, `"label"`; set `textStyle` explicitly on every block (missing = `"title"` on marker/text callouts, `"heading"` on shapes). The editor does not add blocks (`canAddBlocks` false) but several blocks in the model render. Optional `text.blockFontScales` (`{ "title": 0.66 }`) scales a style; it is copied between sibling callouts (font sizes are synced across the canvas). |
-| `textWidth` | number | px, default `200`; editor keeps it 150–1280 (100–1280 on text/shape callouts) | Width of the text column of **marker callouts** (`MarkerCallout.md`, `MediaAndTextCallout.md`, `FlexCircleCallout.md`). `TextCallout` and `ShapeCallout` lay their text out in `width`; on them `textWidth` is only kept in sync by the editor's resize and is not read by the layout. |
-| `color` | string or null | palette color (`"theme"`, `"accent1"`…, `"primary"`, `"secondary"`, `"background_light"`…), default `null` -> the canvas `collectionColor` (default `"theme"`) | Shape fill/stroke, marker dot/number circle, media frame or unframed-icon color. `null` and `"theme"` are "automatic": on a colored slide background the palette swaps them for a readable color; any other explicit value is honoured as-is (`allowColorOnColor`). |
-| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`, `"none"`; default: the theme's element style | How `color` is applied to shapes and shape-framed media. Forced to `"filled"` by `"bullet-text"`, `"numbered-text"`, `"lettered-text"`. See the class docs. |
-| `fitToText` | boolean | read by `ShapeCallout` only (default `false` when absent; the editor writes `true` for new boxes) | See `ShapeCallout.md`. Every other class ignores it (they always fit their contents) even though the editor writes it. |
-| `textDirection` | string | `"auto"`, `"right"`, `"left"`, `"top"`, `"bottom"` | Marker callouts and `"flex-circle"` only (`MarkerCallout.md`). |
-| `textAlign` | string | `"left"`, `"center"`, `"right"` | `"text"` and shape callouts only (`TextCallout.md`, `ShapeCallout.md`); ignored by marker callouts (their alignment follows `textDirection`). |
-| `markerSize` | number | px | `"content-and-text"` (default 75, min 50) and `"flex-circle"` (default 100, 10–400) only. Bullet/numbered/lettered markers have theme-fixed sizes. |
-| `content_type`, `content_value`, `frameType` | string | see `MediaCallout.md`, `MediaAndTextCallout.md` | Media of `"content"` / `"content-and-text"`. `frameType` is reset to `null` by numbered/lettered callouts. |
-| `value` | object | `{ "blocks": [{ "type": "text", "html": "1" }] }` | Marker text of `"numbered-text"` / `"lettered-text"`; generated from the entry index when absent. |
-| `textInset`, `shape`, `fill`, `stroke`, `strokeWidth`, `strokeStyle`, `verticalAlign`, `adj1`, `direction`, `canReshape`, `fitWidthToText`, `titleTextStyle` | – | shape callouts | `ShapeCallout.md`: `textInset` and `verticalAlign` are authorable, the rest is written by the app. |
-| `textColor` | – | written as `null` by the editor when the type changes | Not read by any callout class (not verified further); omit. |
-| `nodeType`, `propsToMigrate`, `accentColor` (on blocks), `iconColor` | – | legacy | Left by the 10.02 migration (`CalloutsCanvas.md`) or deleted by it (`iconColor` on media callouts); never author them. |
+```json
+[
+  { "id": "n1", "type": "callout", "calloutType": "box", "x": 300, "y": 200, "width": 180, "height": 80,
+    "fitToText": true, "decorationStyle": "filled",
+    "text": { "blocks": [{ "type": "text", "textStyle": "title", "html": "Receive order" }] } },
+  { "id": "n2", "type": "callout", "calloutType": "bullet-text", "x": 640, "y": 200, "textWidth": 200,
+    "textDirection": "auto", "color": "accent1",
+    "text": { "blocks": [{ "type": "text", "textStyle": "title", "html": "Check stock" }] } },
+  { "id": "n3", "type": "callout", "calloutType": "content", "x": 980, "y": 200, "width": 80, "height": 80,
+    "content_type": "icon", "content_value": "truck", "frameType": "circle" }
+]
+```
 
-## Nested elements
+## Pitfalls
 
-- `text` -> `TextElement` (`TextElement.md`) bound to `text`, on every class except `MediaCallout`. Options common
-  to all callouts: header block structure, default style `"title"` (shapes: `"heading"`), no block adding, text
-  scaled down to fit where the class fixes the box, font size synced with the sibling callouts, double click to
-  edit.
-- Per class: `marker` (`SVGCircleElement`, no model) for bullet/flex-circle/timeline-text, `value` (`TextElement`
-  with a circle decoration) for numbered/lettered, `content` (`FramedMediaElement`, `FramedMediaElement.md`) for the
-  media callouts; the shape is an inline SVG. See the class docs.
+- `x`/`y` are the reference point (centre or marker centre), not the top-left corner.
+- `calloutType` decides the class **and** must be spelt exactly; a typo silently renders a box.
+- Only shapes honour `fitToText`; everything else resizes itself and overwrites `width`/`height`, so never encode
+  layout intent in the `height` of a text or marker callout.
+- `textWidth` sizes the text of marker callouts only; for `"text"` and shapes use `width`.
+- `textAlign` is ignored by marker callouts, `textDirection` by everything but marker callouts.
+- Set `textStyle` on every block: an omitted style gives `"heading"` (30 px) inside shapes.
+- Keep `color` `null`/`"theme"` unless you want a fixed color: explicit colors are not adapted to colored slide
+  backgrounds.
+- Do not author `nodeType`, `shape`, `fill`, `stroke`, `adj1`, `textColor`; they are legacy, app-written or unused.
 
 ## Rules and limits
 
@@ -109,32 +106,39 @@ Container fields (`id`, `type: "callout"`, `calloutType`, `rotation`, `opacity`,
   without `color` on a `"background_light"`/`"background_dark"`/`"background_accent"` slide gets
   `color: "primary"`.
 
-## Minimal example
+## Full reference
 
-One entry of each family on a `flow_chart` (`states[0].primary.elements[]`), from the recipe and the class defaults:
+The complete field tables and the nested elements, for the fields the minimal example does not show.
 
-```json
-[
-  { "id": "n1", "type": "callout", "calloutType": "box", "x": 300, "y": 200, "width": 180, "height": 80,
-    "fitToText": true, "decorationStyle": "filled",
-    "text": { "blocks": [{ "type": "text", "textStyle": "title", "html": "Receive order" }] } },
-  { "id": "n2", "type": "callout", "calloutType": "bullet-text", "x": 640, "y": 200, "textWidth": 200,
-    "textDirection": "auto", "color": "accent1",
-    "text": { "blocks": [{ "type": "text", "textStyle": "title", "html": "Check stock" }] } },
-  { "id": "n3", "type": "callout", "calloutType": "content", "x": 980, "y": 200, "width": 80, "height": 80,
-    "content_type": "icon", "content_value": "truck", "frameType": "circle" }
-]
-```
+### Model fields
 
-## Pitfalls
+Container fields (`id`, `type: "callout"`, `calloutType`, `rotation`, `opacity`, `isHidden`, `isLocked`, `shadow`,
+`groupIds`, `name`) are in `AuthoringElementContainer.md`. What every callout class reads or writes:
 
-- `x`/`y` are the reference point (centre or marker centre), not the top-left corner.
-- `calloutType` decides the class **and** must be spelt exactly; a typo silently renders a box.
-- Only shapes honour `fitToText`; everything else resizes itself and overwrites `width`/`height`, so never encode
-  layout intent in the `height` of a text or marker callout.
-- `textWidth` sizes the text of marker callouts only; for `"text"` and shapes use `width`.
-- `textAlign` is ignored by marker callouts, `textDirection` by everything but marker callouts.
-- Set `textStyle` on every block: an omitted style gives `"heading"` (30 px) inside shapes.
-- Keep `color` `null`/`"theme"` unless you want a fixed color: explicit colors are not adapted to colored slide
-  backgrounds.
-- Do not author `nodeType`, `shape`, `fill`, `stroke`, `adj1`, `textColor`; they are legacy, app-written or unused.
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `x`, `y` (required) | number | px inside the canvas; `NaN` -> slide centre; on `flow_chart` both `0`/missing -> near the canvas centre (`canvas size / 2 − box size / 2`) | Position of the **reference point**: the centre of the shape/text/media box for `"box"`, `"circle"`, `"diamond"`, `"capsule"`, `"text"`, `"content"`; the **marker centre** for `"bullet-text"`, `"numbered-text"`, `"lettered-text"`, `"timeline-text"`, `"content-and-text"`, `"flex-circle"`. The box is laid out around that point. |
+| `width`, `height` | number | px; absent -> canvas size is used for the first layout | Size of the box. Rewritten on every render by every class except the shapes (see "Fit to contents" below), so author them for shapes and treat them as cache elsewhere. |
+| `text` | object | `{ "blocks": [...] }`; absent or empty: marker/text callouts write one empty `"title"` block (editor placeholder), shapes render no text, `"content"` ignores it | The text, `TextElement.md` block format; blocks get `id`, `html`, `type: "text"` filled in when missing. Block structure "header": allowed `textStyle` `"heading"`, `"title"`, `"body"`, `"label"`; set `textStyle` explicitly on every block (missing = `"title"` on marker/text callouts, `"heading"` on shapes). The editor does not add blocks (`canAddBlocks` false) but several blocks in the model render. Optional `text.blockFontScales` (`{ "title": 0.66 }`) scales a style; it is copied between sibling callouts (font sizes are synced across the canvas). |
+| `textWidth` | number | px, default `200`; editor keeps it 150–1280 (100–1280 on text/shape callouts) | Width of the text column of **marker callouts** (`MarkerCallout.md`, `MediaAndTextCallout.md`, `FlexCircleCallout.md`). `TextCallout` and `ShapeCallout` lay their text out in `width`; on them `textWidth` is only kept in sync by the editor's resize and is not read by the layout. |
+| `color` | string or null | palette color (`"theme"`, `"accent1"`…, `"primary"`, `"secondary"`, `"background_light"`…), default `null` -> the canvas `collectionColor` (default `"theme"`) | Shape fill/stroke, marker dot/number circle, media frame or unframed-icon color. `null` and `"theme"` are "automatic": on a colored slide background the palette swaps them for a readable color; any other explicit value is honoured as-is (`allowColorOnColor`). |
+| `decorationStyle` | string | `"filled"`, `"outlined"`, `"muted"`, `"fillAndStroke"`, `"none"`; default: the theme's element style | How `color` is applied to shapes and shape-framed media. Forced to `"filled"` by `"bullet-text"`, `"numbered-text"`, `"lettered-text"`. See the class docs. |
+| `fitToText` | boolean | read by `ShapeCallout` only (default `false` when absent; the editor writes `true` for new boxes) | See `ShapeCallout.md`. Every other class ignores it (they always fit their contents) even though the editor writes it. |
+| `textDirection` | string | `"auto"`, `"right"`, `"left"`, `"top"`, `"bottom"` | Marker callouts and `"flex-circle"` only (`MarkerCallout.md`). |
+| `textAlign` | string | `"left"`, `"center"`, `"right"` | `"text"` and shape callouts only (`TextCallout.md`, `ShapeCallout.md`); ignored by marker callouts (their alignment follows `textDirection`). |
+| `markerSize` | number | px | `"content-and-text"` (default 75, min 50) and `"flex-circle"` (default 100, 10–400) only. Bullet/numbered/lettered markers have theme-fixed sizes. |
+| `content_type`, `content_value`, `frameType` | string | see `MediaCallout.md`, `MediaAndTextCallout.md` | Media of `"content"` / `"content-and-text"`. `frameType` is reset to `null` by numbered/lettered callouts. |
+| `value` | object | `{ "blocks": [{ "type": "text", "html": "1" }] }` | Marker text of `"numbered-text"` / `"lettered-text"`; generated from the entry index when absent. |
+| `textInset`, `shape`, `fill`, `stroke`, `strokeWidth`, `strokeStyle`, `verticalAlign`, `adj1`, `direction`, `canReshape`, `fitWidthToText`, `titleTextStyle` | – | shape callouts | `ShapeCallout.md`: `textInset` and `verticalAlign` are authorable, the rest is written by the app. |
+| `textColor` | – | written as `null` by the editor when the type changes | Not read by any callout class (not verified further); omit. |
+| `nodeType`, `propsToMigrate`, `accentColor` (on blocks), `iconColor` | – | legacy | Left by the 10.02 migration (`CalloutsCanvas.md`) or deleted by it (`iconColor` on media callouts); never author them. |
+
+### Nested elements
+
+- `text` -> `TextElement` (`TextElement.md`) bound to `text`, on every class except `MediaCallout`. Options common
+  to all callouts: header block structure, default style `"title"` (shapes: `"heading"`), no block adding, text
+  scaled down to fit where the class fixes the box, font size synced with the sibling callouts, double click to
+  edit.
+- Per class: `marker` (`SVGCircleElement`, no model) for bullet/flex-circle/timeline-text, `value` (`TextElement`
+  with a circle decoration) for numbered/lettered, `content` (`FramedMediaElement`, `FramedMediaElement.md`) for the
+  media callouts; the shape is an inline SVG. See the class docs.

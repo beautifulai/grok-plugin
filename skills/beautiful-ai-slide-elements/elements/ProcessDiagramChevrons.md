@@ -14,49 +14,6 @@ selectable wrapper around one `TextElement`) are internal and documented here.
 - `states[0].primary.items[].text` - title inside the chevron (`ProcessDiagramChevronShape.text`).
 - `states[0].primary.items[].body` - description outside the chevron (`ProcessDiagramDescription.body`).
 
-## Model fields
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `items` (required) | array | 1-10 items | Steps, left to right. |
-| `ornament` | string | `"none"` (default), `"number"`, `"letter"`, `"icon"` | Adds an `Ornament.md` (50px circle) on each chevron: 1,2,3 / A,B,C (computed from position) or the item's icon (`content_type`/`content_value` on the item). |
-| `textLayout` | string | `"none"` (default), `"above"`, `"below"`, `"alternate"` | Where item descriptions (`body`) go. The getter returns `"none"` whenever no item has a `body`; with bodies present, `"none"` falls through to the alternating layout. When the items wrap to 2 rows the layout is forced: row 1 descriptions above, row 2 below. |
-| `itemHeight` | number | `0.5`-`1.5`, default `1` | Multiplier on the chevron height (125px in the default theme). |
-| `collectionColor`, `decorationStyle` | | see `ProcessDiagram.md` | |
-
-### items[] model (`ProcessDiagramChevronItem`)
-
-| Field | Type | Values / default | Meaning |
-|---|---|---|---|
-| `text` | object | `{ blocks }` (`title_and_body`), see `TextElement.md` | Title drawn inside the chevron (scaled to fit, centered). Keep it to a few words. |
-| `body` | object or `null` | `{ blocks }` (`title_and_body`, first block usually `textStyle: "body"`), default absent | Description outside the chevron. Present (non-null) = description shown (`showBody`); `null`/absent = no description for this step. Deleting the description in the UI sets `body: null`. |
-| `content_type`, `content_value` | string | `"icon"` + icon key (any `ContentElement.md` media works, non-icons get a circular frame) | The ornament icon when `ornament` is `"icon"`. The ornament's `ContentElement` reads them from the item model. |
-| `ornamentSize` | number | px, default 50 | Overrides the ornament circle size for this item. |
-| `hilited`, `color`, `id` | | see `ProcessDiagram.md` | |
-
-## Nested elements
-
-- `items[]` -> `ProcessDiagramChevronItem` (1-10, `minItemWidth` 200px, at most 2 rows).
-- `shapeContainer` -> `ProcessDiagramChevronShape`: `shape` (SVG polygon; the first item has a flat left edge, the
-  others a notched one; chevron offset 30px) + `text` -> `TextElement.md` (`title_and_body`, scale-to-fit, font
-  synced across items, alignment allowed).
-- `body` -> `ProcessDiagramDescription` -> its `body` `TextElement.md` (`title_and_body`, scale-to-fit, synced).
-- `ornament` -> `Ornament.md` (only when `ornament != "none"`), drawn at the top edge of the shape when the
-  description is below (or there is none), at the bottom edge when the description is above; alternating per item
-  in `"alternate"` layout.
-
-## Rules and limits
-
-- The chevron height is fixed (`125px * itemHeight`); the title text scales down to fit inside, so long titles become
-  small. Descriptions take the remaining height (`above`/`below`: all of it; `alternate`: half each side).
-- With an ornament the shape gets extra top/bottom padding (30px/20px) so the circle does not cover the text.
-- Two-row layout happens when the items do not fit one row (10 items at 200px min width); then `textLayout`
-  `"above"`/`"below"` are ignored (the UI only offers `"none"`/`"alternate"` in that state).
-- Migration `_migrate_10`: a legacy `body` written as a text object (`{ text, styles }`) is converted to `{ blocks }`
-  with `textStyle: "body"`. Legacy `title` objects next to `text` are ignored.
-- Import from other templates maps a list item's last secondary text to `body` and the rest into `text`; icons are
-  copied only when `ornament` is already `"icon"`.
-
 ## Minimal example
 
 ```json
@@ -101,3 +58,50 @@ icon fields are not needed.
 - Mixed items (some with `body`, some without) are allowed; the shapes stay aligned in the row, the body-less steps
   simply show no description. For a uniform look give every step a `body` or none.
 - Do not write `__generateImage` on items you filled yourself (see `ContentElement.md`).
+
+## Rules and limits
+
+- The chevron height is fixed (`125px * itemHeight`); the title text scales down to fit inside, so long titles become
+  small. Descriptions take the remaining height (`above`/`below`: all of it; `alternate`: half each side).
+- With an ornament the shape gets extra top/bottom padding (30px/20px) so the circle does not cover the text.
+- Two-row layout happens when the items do not fit one row (10 items at 200px min width); then `textLayout`
+  `"above"`/`"below"` are ignored (the UI only offers `"none"`/`"alternate"` in that state).
+- Migration `_migrate_10`: a legacy `body` written as a text object (`{ text, styles }`) is converted to `{ blocks }`
+  with `textStyle: "body"`. Legacy `title` objects next to `text` are ignored.
+- Import from other templates maps a list item's last secondary text to `body` and the rest into `text`; icons are
+  copied only when `ornament` is already `"icon"`.
+
+## Full reference
+
+The complete field tables and the nested elements, for the fields the minimal example does not show.
+
+### Model fields
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `items` (required) | array | 1-10 items | Steps, left to right. |
+| `ornament` | string | `"none"` (default), `"number"`, `"letter"`, `"icon"` | Adds an `Ornament.md` (50px circle) on each chevron: 1,2,3 / A,B,C (computed from position) or the item's icon (`content_type`/`content_value` on the item). |
+| `textLayout` | string | `"none"` (default), `"above"`, `"below"`, `"alternate"` | Where item descriptions (`body`) go. The getter returns `"none"` whenever no item has a `body`; with bodies present, `"none"` falls through to the alternating layout. When the items wrap to 2 rows the layout is forced: row 1 descriptions above, row 2 below. |
+| `itemHeight` | number | `0.5`-`1.5`, default `1` | Multiplier on the chevron height (125px in the default theme). |
+| `collectionColor`, `decorationStyle` | | see `ProcessDiagram.md` | |
+
+#### items[] model (`ProcessDiagramChevronItem`)
+
+| Field | Type | Values / default | Meaning |
+|---|---|---|---|
+| `text` | object | `{ blocks }` (`title_and_body`), see `TextElement.md` | Title drawn inside the chevron (scaled to fit, centered). Keep it to a few words. |
+| `body` | object or `null` | `{ blocks }` (`title_and_body`, first block usually `textStyle: "body"`), default absent | Description outside the chevron. Present (non-null) = description shown (`showBody`); `null`/absent = no description for this step. Deleting the description in the UI sets `body: null`. |
+| `content_type`, `content_value` | string | `"icon"` + icon key (any `ContentElement.md` media works, non-icons get a circular frame) | The ornament icon when `ornament` is `"icon"`. The ornament's `ContentElement` reads them from the item model. |
+| `ornamentSize` | number | px, default 50 | Overrides the ornament circle size for this item. |
+| `hilited`, `color`, `id` | | see `ProcessDiagram.md` | |
+
+### Nested elements
+
+- `items[]` -> `ProcessDiagramChevronItem` (1-10, `minItemWidth` 200px, at most 2 rows).
+- `shapeContainer` -> `ProcessDiagramChevronShape`: `shape` (SVG polygon; the first item has a flat left edge, the
+  others a notched one; chevron offset 30px) + `text` -> `TextElement.md` (`title_and_body`, scale-to-fit, font
+  synced across items, alignment allowed).
+- `body` -> `ProcessDiagramDescription` -> its `body` `TextElement.md` (`title_and_body`, scale-to-fit, synced).
+- `ornament` -> `Ornament.md` (only when `ornament != "none"`), drawn at the top edge of the shape when the
+  description is below (or there is none), at the bottom edge when the description is above; alternating per item
+  in `"alternate"` layout.
