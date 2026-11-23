@@ -37,7 +37,7 @@ Each tool's description says what it needs, what it returns and what it refuses;
 
 ## Showing the user a slide
 
-The images `render_slide` and the save tools return are for you: most chat clients do not display images returned by tools, so never tell the user an image is "shown above" or attached. To show the user a slide or a presentation, give the editor link opened on the slide (`editorUrl` from `get_slide`, or `get_presentation_links` with the slide number), and the player link when they want to present. In a client that renders MCP Apps (Claude, ChatGPT), `open_presentation` also puts the editor in the chat: open it after a change so they see the result in place (or right after creating a deck, so they watch it fill in) and say what the tool's result tells you to say about it. Describe the slide in a sentence next to the link (render it first so the description is right).
+The images `render_slide` and the save tools return are for you: most chat clients do not display images returned by tools, so never tell the user an image is "shown above" or attached. To show the user a slide or a presentation, give the editor link opened on the slide (`editorUrl` from `get_slide`, or `get_presentation_links` with the slide number), and the player link when they want to present. In a client that renders MCP Apps, `open_presentation` also puts the editor in the chat: open it after a change so they see the result in place (or right after creating a deck, so they watch it fill in) and say what the tool's result tells you to say about it. Describe the slide in a sentence next to the link (render it first so the description is right).
 
 ## The rest of the presentation
 
