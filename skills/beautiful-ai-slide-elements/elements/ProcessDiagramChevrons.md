@@ -57,6 +57,12 @@ icon fields are not needed.
   or use `"number"`.
 - Mixed items (some with `body`, some without) are allowed; the shapes stay aligned in the row, the body-less steps
   simply show no description. For a uniform look give every step a `body` or none.
+- Descriptions are narrow: each is its step's width less 70px. Without a tray that is about 240px with 4 steps
+  and 140px with 6; beside a `left_tray` / `right_tray` 400px wide about 200px with 3 steps and 140px with 4
+  (130px beside the default 440px). At 130–140px a line holds some 15 characters, so keep such a description to
+  a few short words, and mind hyphenated ones: a word like "e-bikes" that does not fit the line breaks at its
+  hyphen ("300 more e-" / "bikes"). Reword it ("electric bikes"), or write a non-breaking hyphen (`\u2011` in the
+  JSON string), which keeps the word together.
 - Do not write `__generateImage` on items you filled yourself (see `ContentElement.md`).
 
 ## Rules and limits
@@ -64,7 +70,10 @@ icon fields are not needed.
 - The chevron height is fixed (`125px * itemHeight`); the title text scales down to fit inside, so long titles become
   small. Descriptions take the remaining height (`above`/`below`: all of it; `alternate`: half each side).
 - With an ornament the shape gets extra top/bottom padding (30px/20px) so the circle does not cover the text.
-- Two-row layout happens when the items do not fit one row (10 items at 200px min width); then `textLayout`
+- Two-row layout happens when the items do not fit one row at their 200px minimum width (neighbors overlap by
+  20px, so n steps need 180n + 20 px). Under a top header the element is 1180px wide without a tray: 6 steps fit,
+  7 wrap. A `left_tray` / `right_tray` takes its `tray.trayWidth` off that: 4 steps fit beside one of up to
+  440px, 3 beside one of up to 620px (an inline tray takes 40px more: 400 and 580). In two rows `textLayout`
   `"above"`/`"below"` are ignored (the UI only offers `"none"`/`"alternate"` in that state).
 - Migration `_migrate_10`: a legacy `body` written as a text object (`{ text, styles }`) is converted to `{ blocks }`
   with `textStyle: "body"`. Legacy `title` objects next to `text` are ignored.

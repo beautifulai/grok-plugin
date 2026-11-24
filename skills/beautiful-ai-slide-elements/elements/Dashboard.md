@@ -40,7 +40,7 @@ A `dashboard` slide with a column chart on the left and two statistics on the ri
           "chartData": {
             "series": [ { "id": "series1", "name": "Revenue", "type": "column", "colorName": "chart1", "marker": "none",
                           "data": [ { "y": 120 }, { "y": 150 }, { "y": 180 } ] } ],
-            "xAxis": { "categories": [ "Jul", "Aug", "Sep" ], "labels": { "enabled": true }, "showAxisLine": true },
+            "xAxis": { "categories": [ "Jul", "Aug", "Sep" ], "labels": { "enabled": true }, "showAxisLine": true, "endOnTick": true },
             "yAxis": { "labels": { "enabled": true }, "showGridLines": true, "format": "currency", "formatOptions": { "decimal": 0, "separator": true, "currency": "$", "abbreviated": "lower" } },
             "yAxis2": { "visible": false, "opposite": true }
           }
@@ -81,6 +81,51 @@ A statistic with a description instead of a change capsule (a metric and what it
 chart) is `"ornamentType": "text"` with the description in `note` and no `changeLabel`:
 `{ "ornamentType": "text", "horizontalAlign": "left", "value": { "blocks": [ … "57%" … ] }, "note": { "blocks": [ … "of GDP from services" … ] } }`.
 `showChangeInValue` is not read; only `ornamentType` decides what shows under the value (`Statistic.md`).
+
+The same grid with a photo at the side: a chart, its two key figures and a narrow image tray
+(`layout: { "headerPosition": "top", "trayLayout": "right_tray" }`; `tray` sits next to `primary`, see
+`SideBarContainer.md`). The cells are on `background_accent` and the one figure to notice on `theme`. The series
+ends in a projection (`zones`: the default style up to point index 5, `"projection"` after it). The capsule of the
+second statistic points down and stays green (`positive: false`, `color: "positive"`): a falling cost is good news.
+
+```json
+{
+  "header": { "text": { "blocks": [ { "type": "text", "textStyle": "heading", "html": "The pilot worked: canopy is up 30x at Noyo Cove" } ] } },
+  "tray": {
+    "trayWidth": 300, "layoutEngineType": "sidebar",
+    "gridLayout": { "cols": 12, "rows": 12, "cells": [ { "x": 0, "y": 0, "width": 12, "height": 12 } ] },
+    "items": [ { "componentType": "TextAndImage", "cellColor": "background_accent",
+                 "childElement": { "content_type": "image", "content_value": "<asset id>" } } ]
+  },
+  "primary": {
+    "layoutEngineType": "dashboard",
+    "gridLayout": { "cols": 12, "rows": 12, "cells": [ { "x": 0, "y": 0, "width": 8, "height": 12 },
+                    { "x": 8, "y": 0, "width": 4, "height": 6 }, { "x": 8, "y": 6, "width": 4, "height": 6 } ] },
+    "items": [
+      { "componentType": "Chart", "cellColor": "background_accent", "showTitle": "above",
+        "chartTitle": { "textAlign": "left", "chartTitle": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Kelp canopy at Noyo Cove, acres" } ] } },
+        "childElement": { "legendPosition": "off", "chartData": {
+          "series": [ { "id": "series1", "name": "Canopy", "type": "areaspline", "colorName": "theme", "marker": "circle",
+                        "showDataLabels": true, "zoneAxis": "x", "zones": [ { "style": "default", "value": 5 }, { "style": "projection" } ],
+                        "data": [ { "y": 0.4 }, { "y": 0.9 }, { "y": 2.1 }, { "y": 4.8 }, { "y": 8.6 }, { "y": 12.3 }, { "y": 16 } ] } ],
+          "xAxis": { "categories": [ "2020", "2021", "2022", "2023", "2024", "2025", "Goal" ], "labels": { "enabled": true }, "showAxisLine": true, "endOnTick": true },
+          "yAxis": { "labels": { "enabled": false }, "showGridLines": true, "format": "number", "formatOptions": { "decimal": 1, "separator": true } },
+          "yAxis2": { "visible": false, "opposite": true } } } },
+      { "componentType": "Statistic", "cellColor": "theme", "showTitle": "above",
+        "chartTitle": { "textAlign": "left", "chartTitle": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Urchins removed" } ] } },
+        "childElement": { "ornamentType": "text", "horizontalAlign": "left",
+          "value": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "1.4M" } ] },
+          "note": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "by 62 volunteer divers" } ] } } },
+      { "componentType": "Statistic", "cellColor": "background_accent", "showTitle": "above",
+        "chartTitle": { "textAlign": "left", "chartTitle": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "Cost per acre" } ] } },
+        "childElement": { "ornamentType": "capsule", "horizontalAlign": "left", "positive": false, "color": "positive",
+          "value": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "$41K" } ] },
+          "changeLabel": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "38%" } ] },
+          "note": { "blocks": [ { "type": "text", "textStyle": "_use_styles_", "html": "since 2022" } ] } } }
+    ]
+  }
+}
+```
 
 ## Pitfalls
 

@@ -32,6 +32,7 @@ Two-series line chart (as `items[].childElement`; wrap it in a `componentType: "
       "categories": [ "Q1", "Q2", "Q3", "Q4" ],
       "labels": { "enabled": true },
       "showAxisLine": true,
+      "endOnTick": true,
       "dateFormatting": "none",
       "axisTitle": false
     },
@@ -60,7 +61,7 @@ Waterfall (template `chart_waterfall`, one full-size cell with `cellColor: "none
     ],
     "xAxis": {
       "categories": [ "Beginning cash", "Revenue", "Adjustments", "Net revenue", "Taxes", "Net income" ],
-      "labels": { "enabled": true }, "showAxisLine": true, "axisTitle": false
+      "labels": { "enabled": true }, "showAxisLine": true, "endOnTick": true, "axisTitle": false
     },
     "yAxis": {
       "labels": { "enabled": false }, "showGridLines": true, "showAxisLine": false, "axisTitle": "none",
@@ -85,9 +86,11 @@ Waterfall (template `chart_waterfall`, one full-size cell with `cellColor: "none
 - `yAxis.format: "percent"` multiplies the values by 100: write `{ "y": 0.114 }` for 11.4%, not `11.4` (which
   shows as 1140%). Only `Chart` takes fractions; the compare charts, statistics and pies take whole numbers
   (`CompareValuesCollection.md`).
-- The axis reserves no extra room for the last category label: a long last label ("Starship (target)") clips at
-  the cell's right edge while short ones (years) fit at 20 categories. Keep the last label short, or put the long
-  name on a middle category.
+- Write `"endOnTick": true` on `xAxis`. Without it the axis stops short of the last category: the last column or
+  bar (waterfall included) is cut in half at the edge of the cell, and a line's last point sits on the edge with
+  its label cut off. The render reports nothing (`ok` is true). Every chart the app creates has it.
+- A category label wider than its slot turns all the labels 45 degrees: one long last label
+  ("Starship (target)") does it to 20 years. Keep the labels short when there are many categories.
 - `xAxis.showGridLine` (singular, from the default model) does nothing; the real key is `showGridLines`.
 - Copying stored examples: strip `dataLabels` on points, Highcharts-computed zone keys (`color`, `fillColor`,
   `dashStyle`, `translated`, `lineClip`), `null` series/annotation entries, and `pt` flags.
@@ -169,6 +172,7 @@ The complete field tables and the nested elements, for the fields the minimal ex
 | `labels` | object | `{ "enabled": true }`; **absent = labels hidden** | Show category labels. |
 | `dateFormatting` | string | `"none"` (default) or a date format: `"MMM"`, `"MMM D"`, `"MMM Do"`, `"MMM YY"`, `"MMM YYYY"`, `"ll"`, `"LL"`, `"M/D"`, `"MM/DD/YY"`, `"M/D/YYYY"`, `"L"`, `"YYYY"`, `"YYYY-MM"`, `"YYYY-MM-DD"`, `"MM-DD-YYYY"`, `"MM.DD.YYYY"`, `"D MMM"`, `"Do MMM"`, `"Do MMM YYYY"`, `"D-MMM"` | Parse each category as a date and reformat it for display; categories that do not parse are shown as written. |
 | `showAxisLine` | boolean | default `false` | Draw the axis line. |
+| `endOnTick` | boolean | write `true`; absent = the last category is cut off at the edge of the cell | Extend the axis to the end of the last category (see Pitfalls). |
 | `showGridLines` | boolean | default `false` | Vertical grid lines (note: the default model writes `showGridLine`, singular, which is ignored). |
 | `showMajorTicks` | boolean | default `false` | Tick marks. |
 | `axisTitle` | `false` \| `"none"` \| `true` | default `false` | `true` shows `axisTitleText` under the axis; `false`/`"none"` hides it. |
@@ -177,7 +181,7 @@ The complete field tables and the nested elements, for the fields the minimal ex
 | `visible` | boolean | legacy | `false` is migrated at build into "everything off" (`labels.enabled: false`, no line/grid/ticks/title) and reset to `true`. |
 
 Other keys found in stored models (`type`, `autoType`, `categoryType`, `labelInterval`, `showFirstLabel`,
-`showLastLabel`, `endOnTick`, `showMinorTicks`, `dateSimple`, `dateFormat`, `dateInterval`) are defaults noise.
+`showLastLabel`, `showMinorTicks`, `dateSimple`, `dateFormat`, `dateInterval`) are defaults noise.
 The whole axis object is merged into the Highcharts axis options, so recognised Highcharts keys do take effect.
 
 #### `chartData.yAxis` and `chartData.yAxis2`

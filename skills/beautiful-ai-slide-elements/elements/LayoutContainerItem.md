@@ -33,7 +33,7 @@ One `items[]` entry: a titled chart cell.
     "chartData": {
       "series": [ { "id": "series1", "name": "Users", "type": "line", "colorName": "chart1", "marker": "none",
                     "data": [ { "y": 120 }, { "y": 180 }, { "y": 260 } ] } ],
-      "xAxis": { "categories": [ "Jan", "Feb", "Mar" ], "labels": { "enabled": true }, "showAxisLine": true },
+      "xAxis": { "categories": [ "Jan", "Feb", "Mar" ], "labels": { "enabled": true }, "showAxisLine": true, "endOnTick": true },
       "yAxis": { "labels": { "enabled": true }, "showGridLines": true, "format": "number" },
       "yAxis2": { "visible": false, "opposite": true }
     }
